@@ -3,11 +3,13 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"github.com/tinode/chat/server/logs"
 	"io/ioutil"
 	"log"
 	"math/rand"
 	"os"
 	"path/filepath"
+	//"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -173,7 +175,7 @@ func main() {
 	upgrade := flag.Bool("upgrade", false, "perform database version upgrade")
 	noInit := flag.Bool("no_init", false, "check that database exists but don't create if missing")
 	datafile := flag.String("data", "", "name of file with sample data to load")
-	conffile := flag.String("config", "./tinode.conf", "config of the database connection")
+	//conffile := flag.String("config", "./tinode.conf", "config of the database connection")
 
 	flag.Parse()
 
@@ -192,8 +194,19 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 	data.datapath, _ = filepath.Split(*datafile)
 
+	curwd, err1 := os.Getwd()
+	if err1 != nil {
+		logs.Err.Fatal("Couldn't get current working directory: ", err1)
+	}
+
+	configfile := flag.String("config", "tinode.conf", "Path to config file.")
+
+	*configfile = toAbsolutePath(curwd, *configfile)
+	//logs.Info.Printf("Using config from '%s'", *configfile)
+
+
 	var config configType
-	if file, err := os.Open(*conffile); err != nil {
+	if file, err := os.Open(*configfile); err != nil {
 		log.Fatalln("Failed to read config file:", err)
 	} else {
 		jr := jcr.New(file)
@@ -274,4 +287,13 @@ func main() {
 		log.Println("Sample data ignored. All done.")
 	}
 	os.Exit(0)
+}
+
+// Convert relative filepath to absolute.
+func toAbsolutePath(base, path string) string {
+	if filepath.IsAbs(path) {
+		return path
+	}
+	return filepath.Clean(filepath.Join(base, "tinode-db", path))
+	//return filepath.Clean(filepath.Join(base, path))
 }
