@@ -1,3 +1,4 @@
+//go:build mysql
 // +build mysql
 
 // Package mysql is a database adapter for MySQL.
@@ -39,7 +40,7 @@ type adapter struct {
 }
 
 const (
-	defaultDSN      = "root:@tcp(localhost:3306)/tinode?parseTime=true"
+	defaultDSN      = "root:@tcp(127.0.0.1:3306)/tinode?parseTime=true"
 	defaultDatabase = "tinode"
 
 	adpVersion = 111

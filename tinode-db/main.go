@@ -173,12 +173,16 @@ func getPassword(n int) string {
 func main() {
 	reset := flag.Bool("reset", false, "force database reset")
 	upgrade := flag.Bool("upgrade", false, "perform database version upgrade")
-	noInit := flag.Bool("no_init", false, "check that database exists but don't create if missing")
-	datafile := flag.String("data", "", "name of file with sample data to load")
+	noInit := flag.Bool("no_init", true, "check that database exists but don't create if missing")
+	datafile := flag.String("data", "./data.json", "name of file with sample data to load")
 	//conffile := flag.String("config", "./tinode.conf", "config of the database connection")
 
 	flag.Parse()
-
+	curwd, err1 := os.Getwd()
+	if err1 != nil {
+		logs.Err.Fatal("Couldn't get current working directory: ", err1)
+	}
+	*datafile = toAbsolutePath(curwd, "data.json")
 	var data Data
 	if *datafile != "" && *datafile != "-" {
 		raw, err := ioutil.ReadFile(*datafile)
@@ -194,16 +198,10 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 	data.datapath, _ = filepath.Split(*datafile)
 
-	curwd, err1 := os.Getwd()
-	if err1 != nil {
-		logs.Err.Fatal("Couldn't get current working directory: ", err1)
-	}
-
 	configfile := flag.String("config", "tinode.conf", "Path to config file.")
 
 	*configfile = toAbsolutePath(curwd, *configfile)
 	//logs.Info.Printf("Using config from '%s'", *configfile)
-
 
 	var config configType
 	if file, err := os.Open(*configfile); err != nil {

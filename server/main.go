@@ -381,79 +381,81 @@ func main() {
 	// List of tag namespaces for user discovery which cannot be changed directly
 	// by the client, e.g. 'email' or 'tel'.
 	globals.immutableTagNS = make(map[string]bool)
-
-	authNames := store.Store.GetAuthNames()
-	for _, name := range authNames {
-		if authhdl := store.Store.GetLogicalAuthHandler(name); authhdl == nil {
-			logs.Err.Fatalln("Unknown authenticator", name)
-		} else if jsconf := config.Auth[name]; jsconf != nil {
-			if err := authhdl.Init(jsconf, name); err != nil {
-				logs.Err.Fatalln("Failed to init auth scheme", name+":", err)
-			}
-			tags, err := authhdl.RestrictedTags()
-			if err != nil {
-				logs.Err.Fatalln("Failed get restricted tag namespaces (prefixes)", name+":", err)
-			}
-			for _, tag := range tags {
-				if strings.Contains(tag, ":") {
-					logs.Err.Fatalln("tags restricted by auth handler should not contain character ':'", tag)
+	/*
+		authNames := store.Store.GetAuthNames()
+		for _, name := range authNames {
+			if authhdl := store.Store.GetLogicalAuthHandler(name); authhdl == nil {
+				logs.Err.Fatalln("Unknown authenticator", name)
+			} else if jsconf := config.Auth[name]; jsconf != nil {
+				if err := authhdl.Init(jsconf, name); err != nil {
+					logs.Err.Fatalln("Failed to init auth scheme", name+":", err)
 				}
-				globals.immutableTagNS[tag] = true
-			}
-		}
-	}
-
-	// Process validators.
-	for name, vconf := range config.Validator {
-		// Check if validator is restrictive. If so, add validator name to the list of restricted tags.
-		// The namespace can be restricted even if the validator is disabled.
-		if vconf.AddToTags {
-			if strings.Contains(name, ":") {
-				logs.Err.Fatalln("acc_validation names should not contain character ':'", name)
-			}
-			globals.immutableTagNS[name] = true
-		}
-
-		if len(vconf.Required) == 0 {
-			// Skip disabled validator.
-			continue
-		}
-
-		var reqLevels []auth.Level
-		for _, req := range vconf.Required {
-			lvl := auth.ParseAuthLevel(req)
-			if lvl == auth.LevelNone {
-				if req != "" {
-					logs.Err.Fatalf("Invalid required AuthLevel '%s' in validator '%s'", req, name)
+				tags, err := authhdl.RestrictedTags()
+				if err != nil {
+					logs.Err.Fatalln("Failed get restricted tag namespaces (prefixes)", name+":", err)
 				}
-				// Skip empty string
+				for _, tag := range tags {
+					if strings.Contains(tag, ":") {
+						logs.Err.Fatalln("tags restricted by auth handler should not contain character ':'", tag)
+					}
+					globals.immutableTagNS[tag] = true
+				}
+			}
+		}
+
+		// Process validators.
+		for name, vconf := range config.Validator {
+			// Check if validator is restrictive. If so, add validator name to the list of restricted tags.
+			// The namespace can be restricted even if the validator is disabled.
+			if vconf.AddToTags {
+				if strings.Contains(name, ":") {
+					logs.Err.Fatalln("acc_validation names should not contain character ':'", name)
+				}
+				globals.immutableTagNS[name] = true
+			}
+
+			if len(vconf.Required) == 0 {
+				// Skip disabled validator.
 				continue
 			}
-			reqLevels = append(reqLevels, lvl)
-			if globals.authValidators == nil {
-				globals.authValidators = make(map[auth.Level][]string)
+
+			var reqLevels []auth.Level
+			for _, req := range vconf.Required {
+				lvl := auth.ParseAuthLevel(req)
+				if lvl == auth.LevelNone {
+					if req != "" {
+						logs.Err.Fatalf("Invalid required AuthLevel '%s' in validator '%s'", req, name)
+					}
+					// Skip empty string
+					continue
+				}
+				reqLevels = append(reqLevels, lvl)
+				if globals.authValidators == nil {
+					globals.authValidators = make(map[auth.Level][]string)
+				}
+				globals.authValidators[lvl] = append(globals.authValidators[lvl], name)
 			}
-			globals.authValidators[lvl] = append(globals.authValidators[lvl], name)
+
+			if len(reqLevels) == 0 {
+				// Ignore validator with empty levels.
+				continue
+			}
+
+			if val := store.Store.GetValidator(name); val == nil {
+				logs.Err.Fatal("Config provided for an unknown validator '" + name + "'")
+			} else if err = val.Init(string(vconf.Config)); err != nil {
+				logs.Err.Fatal("Failed to init validator '"+name+"': ", err)
+			}
+			if globals.validators == nil {
+				globals.validators = make(map[string]credValidator)
+			}
+			globals.validators[name] = credValidator{
+				requiredAuthLvl: reqLevels,
+				addToTags:       vconf.AddToTags,
+			}
 		}
 
-		if len(reqLevels) == 0 {
-			// Ignore validator with empty levels.
-			continue
-		}
-
-		if val := store.Store.GetValidator(name); val == nil {
-			logs.Err.Fatal("Config provided for an unknown validator '" + name + "'")
-		} else if err = val.Init(string(vconf.Config)); err != nil {
-			logs.Err.Fatal("Failed to init validator '"+name+"': ", err)
-		}
-		if globals.validators == nil {
-			globals.validators = make(map[string]credValidator)
-		}
-		globals.validators[name] = credValidator{
-			requiredAuthLvl: reqLevels,
-			addToTags:       vconf.AddToTags,
-		}
-	}
+	*/
 
 	// Partially restricted tag namespaces
 	globals.maskedTagNS = make(map[string]bool, len(config.MaskedTagNamespaces))
@@ -650,6 +652,3 @@ func main() {
 		logs.Err.Fatal(err)
 	}
 }
-
-
-
