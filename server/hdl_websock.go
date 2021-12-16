@@ -10,7 +10,6 @@
 package main
 
 import (
-	"encoding/json"
 	"net/http"
 	"time"
 
@@ -164,22 +163,22 @@ var upgrader = websocket.Upgrader{
 }
 
 func serveWebSocket(wrt http.ResponseWriter, req *http.Request) {
-	now := time.Now().UTC().Round(time.Millisecond)
+	/*
+		now := time.Now().UTC().Round(time.Millisecond)
+		if isValid, _ := checkAPIKey(getAPIKey(req)); !isValid {
+			wrt.WriteHeader(http.StatusForbidden)
+			json.NewEncoder(wrt).Encode(ErrAPIKeyRequired(now))
+			logs.Err.Println("ws: Missing, invalid or expired API key")
+			return
+		}
 
-	if isValid, _ := checkAPIKey(getAPIKey(req)); !isValid {
-		wrt.WriteHeader(http.StatusForbidden)
-		json.NewEncoder(wrt).Encode(ErrAPIKeyRequired(now))
-		logs.Err.Println("ws: Missing, invalid or expired API key")
-		return
-	}
-
-	if req.Method != http.MethodGet {
-		wrt.WriteHeader(http.StatusMethodNotAllowed)
-		json.NewEncoder(wrt).Encode(ErrOperationNotAllowed("", "", now))
-		logs.Err.Println("ws: Invalid HTTP method", req.Method)
-		return
-	}
-
+		if req.Method != http.MethodGet {
+			wrt.WriteHeader(http.StatusMethodNotAllowed)
+			json.NewEncoder(wrt).Encode(ErrOperationNotAllowed("", "", now))
+			logs.Err.Println("ws: Invalid HTTP method", req.Method)
+			return
+		}
+	*/
 	ws, err := upgrader.Upgrade(wrt, req, nil)
 	if _, ok := err.(websocket.HandshakeError); ok {
 		logs.Err.Println("ws: Not a websocket handshake")

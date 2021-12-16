@@ -205,43 +205,52 @@ func replyCreateUser(s *Session, msg *ClientComMessage, rec *auth.Rec) {
 // * Authentication update, i.e. login/password change
 // * Credentials update
 func replyUpdateUser(s *Session, msg *ClientComMessage, rec *auth.Rec) {
-	if s.uid.IsZero() && rec == nil {
-		// Session is not authenticated and no token provided.
-		logs.Warn.Println("replyUpdateUser: not a new account and not authenticated", s.sid)
-		s.queueOut(ErrPermissionDenied(msg.Id, "", msg.Timestamp))
-		return
-	} else if msg.AsUser != "" && rec != nil {
-		// Two UIDs: one from msg.from, one from token. Ambigous, reject.
-		logs.Warn.Println("replyUpdateUser: got both authenticated session and token", s.sid)
-		s.queueOut(ErrMalformed(msg.Id, "", msg.Timestamp))
-		return
-	}
-
-	userId := msg.AsUser
-	authLvl := auth.Level(msg.AuthLvl)
-	if rec != nil {
-		userId = rec.Uid.UserId()
-		authLvl = rec.AuthLevel
-	}
-
-	if msg.Acc.User != "" && msg.Acc.User != userId {
-		if s.authLvl != auth.LevelRoot {
-			logs.Warn.Println("replyUpdateUser: attempt to change another's account by non-root", s.sid)
+	/*
+		if s.uid.IsZero() && rec == nil {
+			// Session is not authenticated and no token provided.
+			logs.Warn.Println("replyUpdateUser: not a new account and not authenticated", s.sid)
 			s.queueOut(ErrPermissionDenied(msg.Id, "", msg.Timestamp))
 			return
+		} else if msg.AsUser != "" && rec != nil {
+			// Two UIDs: one from msg.from, one from token. Ambigous, reject.
+			logs.Warn.Println("replyUpdateUser: got both authenticated session and token", s.sid)
+			s.queueOut(ErrMalformed(msg.Id, "", msg.Timestamp))
+			return
 		}
-		// Root is editing someone else's account.
-		userId = msg.Acc.User
-		authLvl = auth.ParseAuthLevel(msg.Acc.AuthLevel)
-	}
 
-	uid := types.ParseUserId(userId)
-	if uid.IsZero() {
-		// msg.Acc.User contains invalid data.
-		s.queueOut(ErrMalformed(msg.Id, "", msg.Timestamp))
-		logs.Warn.Println("replyUpdateUser: user id is invalid or missing", s.sid)
-		return
+	*/
+
+	userId := msg.AsUser
+	//authLvl := auth.Level(msg.AuthLvl)
+	authLvl := auth.LevelRoot
+	if rec != nil {
+		userId = rec.Uid.UserId()
+		//authLvl = rec.AuthLevel
 	}
+	/*
+		if msg.Acc.User != "" && msg.Acc.User != userId {
+			if s.authLvl != auth.LevelRoot {
+				logs.Warn.Println("replyUpdateUser: attempt to change another's account by non-root", s.sid)
+				s.queueOut(ErrPermissionDenied(msg.Id, "", msg.Timestamp))
+				return
+			}
+			// Root is editing someone else's account.
+			userId = msg.Acc.User
+			//authLvl = auth.ParseAuthLevel(msg.Acc.AuthLevel)
+		}
+
+
+	*/
+	uid := types.ParseUserId(userId)
+	/*
+		if uid.IsZero() {
+			// msg.Acc.User contains invalid data.
+			s.queueOut(ErrMalformed(msg.Id, "", msg.Timestamp))
+			logs.Warn.Println("replyUpdateUser: user id is invalid or missing", s.sid)
+			return
+		}
+
+	*/
 
 	// Only root can suspend accounts, including own account.
 	if msg.Acc.State != "" && s.authLvl != auth.LevelRoot {

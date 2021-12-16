@@ -853,22 +853,25 @@ func (s *Session) hello(msg *ClientComMessage) {
 func (s *Session) acc(msg *ClientComMessage) {
 	// If token is provided, get the user ID from it.
 	var rec *auth.Rec
-	if msg.Acc.Token != nil {
-		if !s.uid.IsZero() {
-			s.queueOut(ErrAlreadyAuthenticated(msg.Acc.Id, "", msg.Timestamp))
-			logs.Warn.Println("s.acc: got token while already authenticated", s.sid)
-			return
+	/*
+		if msg.Acc.Token != nil {
+			if !s.uid.IsZero() {
+				s.queueOut(ErrAlreadyAuthenticated(msg.Acc.Id, "", msg.Timestamp))
+				logs.Warn.Println("s.acc: got token while already authenticated", s.sid)
+				return
+			}
+
+			var err error
+			rec, _, err = store.Store.GetLogicalAuthHandler("token").Authenticate(msg.Acc.Token, s.remoteAddr)
+			if err != nil {
+				s.queueOut(decodeStoreError(err, msg.Acc.Id, "", msg.Timestamp,
+					map[string]interface{}{"what": "auth"}))
+				logs.Warn.Println("s.acc: invalid token", err, s.sid)
+				return
+			}
 		}
 
-		var err error
-		rec, _, err = store.Store.GetLogicalAuthHandler("token").Authenticate(msg.Acc.Token, s.remoteAddr)
-		if err != nil {
-			s.queueOut(decodeStoreError(err, msg.Acc.Id, "", msg.Timestamp,
-				map[string]interface{}{"what": "auth"}))
-			logs.Warn.Println("s.acc: invalid token", err, s.sid)
-			return
-		}
-	}
+	*/
 
 	if strings.HasPrefix(msg.Acc.User, "new") {
 		// New account

@@ -4,7 +4,6 @@ package auth
 import (
 	"encoding/json"
 	"errors"
-	"strconv"
 	"time"
 
 	"github.com/tinode/chat/server/store/types"
@@ -126,28 +125,32 @@ func (f Feature) MarshalText() ([]byte, error) {
 
 // UnmarshalText parses Feature string as byte slice.
 func (f *Feature) UnmarshalText(b []byte) error {
-	var f0 int
+
+	//var f0 int
 	var err error
-	if len(b) > 0 {
-		if b[0] >= '0' && b[0] <= '9' {
-			f0, err = strconv.Atoi(string(b))
-		} else {
-		Loop:
-			for i := 0; i < len(b); i++ {
-				switch b[i] {
-				case 'V', 'v':
-					f0 |= int(FeatureValidated)
-				case 'L', 'l':
-					f0 |= int(FeatureNoLogin)
-				default:
-					err = errors.New("Feature: invalid character '" + string(b[i]) + "'")
-					break Loop
+	/*
+		if len(b) > 0 {
+			if b[0] >= '0' && b[0] <= '9' {
+				f0, err = strconv.Atoi(string(b))
+			} else {
+			Loop:
+				for i := 0; i < len(b); i++ {
+					switch b[i] {
+					case 'V', 'v':
+						f0 |= int(FeatureValidated)
+					case 'L', 'l':
+						f0 |= int(FeatureNoLogin)
+					default:
+						err = errors.New("Feature: invalid character '" + string(b[i]) + "'")
+						break Loop
+					}
 				}
 			}
 		}
-	}
 
-	*f = Feature(f0)
+		*f = Feature(f0)
+
+	*/
 
 	return err
 }
